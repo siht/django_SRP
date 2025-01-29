@@ -10,3 +10,33 @@
 {{ form }}
 <input type="submit" value="Vote">
 </form>
+
+<p>
+<form>
+    <p>agrega una nueva opción</p>
+    <input id="choice-text" type="text">
+    <button id="add-choice-button">Insert new choice</button>
+</form>
+</p>
+
+<div id="ajax-response"></div>
+
+<script>
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+    var btnClick = document.body.addEventListener("click", function(event){
+        if(event.target.nodeName == "BUTTON" && event.target.id == "add-choice-button"){
+            let div_response = document.getElementById('ajax-response');
+            let choice_text = document.getElementById('choice-text').value;
+            fetch('{% url "polls:add_choice" question.id %}', {
+                    method: "POST",
+                    body: JSON.stringify({"choice_text": choice_text}),
+                    headers: myHeaders,
+                }
+            )
+            .then(response => response.json())
+            .then(json => div_response.innerHTML = json.choice_text + ' añadido, presiones f5')
+            .catch(err => console.log("error"));
+        }
+    });
+</script>

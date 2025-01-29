@@ -9,7 +9,10 @@ from .forms import (
     FormQuestion,
 )
 from .models import Question
-from .serializers import HolaSerializer
+from .serializers import (
+    ChoiceSerializer,
+    HolaSerializer,
+)
 
 
 class AddViewNRequestToContextFormMixin:
@@ -70,3 +73,7 @@ class AjaxView(generics.RetrieveAPIView):
 
     def get_object(self):
         return {'hola': 'mundo'}
+
+
+class AddChoiceView(generics.CreateAPIView):
+    serializer_class = ChoiceSerializer
