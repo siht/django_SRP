@@ -1,13 +1,14 @@
+from django.http import JsonResponse
 from django.db.transaction import atomic
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views import generic
 
+from .models import Question
 from .forms import (
     FormAnswers,
     FormQuestion,
 )
-from .models import Question
 
 
 class AddViewNRequestToContextFormMixin:
@@ -61,3 +62,19 @@ class ResultsView(generic.DetailView):
     model = Question
     template_name = 'polls/results.html'
     context_object_name = 'question'
+
+
+class AjaxView(generic.DetailView):
+    response_class = JsonResponse
+    content_type = 'application/json'
+
+    def render_to_response(self, context, **response_kwargs):
+        response_kwargs.setdefault("content_type", self.content_type)
+        return self.response_class(
+            data=context,
+            **response_kwargs,
+        )
+
+    def get(self, request, *args, **kwargs):
+        context = {'hola': 'mundo'}
+        return self.render_to_response(context)
