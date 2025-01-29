@@ -1,7 +1,28 @@
 from django import forms
+from django.db.models import F
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
 from .models import Question
+
+
+class ExtendFormContextMixin:
+    def __init__(self, **kwargs):
+        self.context = kwargs.pop('context', {})
+        super().__init__(**kwargs)
+
+
+class PostInitFormMixin:
+    '''ideal para modificar propiedades de los campos sin reescribir __init__
+    no user super o recibirás la excepción'''
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._post_init()
+
+    def _post_init(self):
+        raise NotImplementedError(
+            'Subclasses of PostInitFormMixin must provide a _post_init() method.'
+        )
 
 
 class FormQuestion(forms.ModelForm):
@@ -19,3 +40,31 @@ class FormQuestion(forms.ModelForm):
                 'max_length': _('Question is too long.'),
             },
         }
+
+    def save(self, commit=True):
+        instance = super().save(False)
+        instance.pub_date = now()
+        if commit:
+            instance.save()
+        return instance
+
+
+class FormAnswers(ExtendFormContextMixin, PostInitFormMixin, forms.ModelForm):
+    choice_text = forms.ModelChoiceField(queryset=None, empty_label='', widget=forms.RadioSelect)
+
+    class Meta:
+        model = Question
+        fields = ('choice_text',)
+
+    def _post_init(self):
+        question = self.context['view'].get_object()
+        if question:
+            self.fields['choice_text'].label = question.question_text
+            self.fields['choice_text'].queryset = question.choice_set.all()
+
+    def save(self, commit=True):
+        choice = self.cleaned_data['choice_text']
+        choice.votes = F('votes') + 1
+        if commit:
+            choice.save()
+        return choice

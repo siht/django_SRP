@@ -5,8 +5,8 @@ from . import views
 app_name = 'polls'
 
 urlpatterns = [
-    path('', views.all_migthy_method, name='index'),
-    path('<int:pk>/', views.all_migthy_method, name='detail'),
-    path('<int:question_id>/vote/', views.vote, name='vote'),
-    path('me/', views.me, name='me'),
+    path('', views.QuestionListCreateIndexView.as_view(), name='index'),
+    path('me', views.Me.as_view(), name='me'),
+    path('<int:pk>/', views.QuestionDetailView.as_view(), name='detail'),
+    path('<int:pk>/results/', views.ResultsView.as_view(), name='results'),
 ]
