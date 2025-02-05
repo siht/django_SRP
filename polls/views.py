@@ -1,3 +1,4 @@
+# polls/views.py
 from django.db.transaction import atomic
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator

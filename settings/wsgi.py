@@ -1,3 +1,4 @@
+# settings/wsgi.py
 """
 WSGI config for settings project.
 
