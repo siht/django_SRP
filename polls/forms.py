@@ -1,10 +1,12 @@
 # polls/forms.py
 from django import forms
-from django.db.models import F
-from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
-from .models import Question
+from .choice_service import vote
+from .models import (
+    Question,
+)
+from .question_service import create_question
 
 
 class ExtendFormContextMixin:
@@ -43,15 +45,20 @@ class FormQuestion(forms.ModelForm):
         }
 
     def save(self, commit=True):
-        instance = super().save(False)
-        instance.pub_date = now()
-        if commit:
-            instance.save()
-        return instance
+        data = self.cleaned_data
+        # aqui podrías añadir la data del url si es que existe dentro de data y pasarla al negocio
+        # por ejemplo:
+        # pk = self.context.get('request').parser_context.get('kwargs').get('pk')
+        # data.update({'pk'}: pk)
+        return create_question(data) # y esta función deberá regresar un objeto que se alinee a lo que el serializador pida
 
 
 class FormAnswers(ExtendFormContextMixin, PostInitFormMixin, forms.ModelForm):
-    choice_text = forms.ModelChoiceField(queryset=None, empty_label='', widget=forms.RadioSelect)
+    choice_text: forms.ModelChoiceField[Question] = forms.ModelChoiceField(
+        queryset = None,
+        empty_label=None,
+        widget=forms.RadioSelect
+    )
 
     class Meta:
         model = Question
@@ -64,8 +71,4 @@ class FormAnswers(ExtendFormContextMixin, PostInitFormMixin, forms.ModelForm):
             self.fields['choice_text'].queryset = question.choice_set.all()
 
     def save(self, commit=True):
-        choice = self.cleaned_data['choice_text']
-        choice.votes = F('votes') + 1
-        if commit:
-            choice.save()
-        return choice
+        return vote(self.cleaned_data)
