@@ -1,3 +1,4 @@
+# settings/urls.py
 """
 URL configuration for settings project.
 
