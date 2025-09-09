@@ -6,7 +6,7 @@ from .choice_service import vote
 from .models import (
     Question,
 )
-from .question_service import create_question
+from .question_service import CreateQuestion
 
 
 class ExtendFormContextMixin:
@@ -50,7 +50,8 @@ class FormQuestion(forms.ModelForm):
         # por ejemplo:
         # pk = self.context.get('request').parser_context.get('kwargs').get('pk')
         # data.update({'pk'}: pk)
-        return create_question(data) # y esta función deberá regresar un objeto que se alinee a lo que el serializador pida
+        create_question_service = CreateQuestion(**data)
+        return create_question_service.execute() # y esta función deberá regresar un objeto que se alinee a lo que el serializador pida
 
 
 class FormAnswers(ExtendFormContextMixin, PostInitFormMixin, forms.ModelForm):

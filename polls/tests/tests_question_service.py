@@ -1,14 +1,16 @@
 # polls/tests/tests_question_service.py
-from datetime import timezone as datetime_timezone
+from datetime import (
+    datetime,
+    timezone,
+)
 from unittest.mock import patch
 
 from django.test import TestCase
-from django.utils import timezone
 
 from polls.models import Question
 from polls.question_service import (
-    create_question,
-    QuestionData
+    CreateQuestion,
+    QuestionData,
 )
 
 
@@ -18,15 +20,16 @@ class CreateQuestionTest(TestCase):
         """
         Prueba que la función create_question crea y guarda una instancia de Question correctamente.
         """
-        mocked_now_value = timezone.datetime(2023, 10, 1, 12, 0, 0, tzinfo=datetime_timezone.utc)
+        mocked_now_value = datetime(2023, 10, 1, 12, 0, 0, tzinfo=timezone.utc)
         mock_now.return_value = mocked_now_value
         # Datos de entrada
         data: QuestionData = {
-            'question_text': '¿Cuál es tu color favorito?'
+            'question_text': '¿Cuál es tu color favorito?',
         }
 
         # Llamar a la función
-        question = create_question(data)
+        create_question_service = CreateQuestion(**data)
+        question = create_question_service.execute()
         # Verificar que la pregunta se creó correctamente
         self.assertIsInstance(question, Question)
         self.assertEqual(question.question_text, '¿Cuál es tu color favorito?')

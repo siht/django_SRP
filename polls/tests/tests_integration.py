@@ -3,7 +3,10 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
-from polls.models import Question
+from polls.models import (
+    Choice,
+    Question,
+)
 
 
 class QuestionTests(TestCase):
@@ -22,6 +25,11 @@ class QuestionTests(TestCase):
 
 
 class VotoTests(TestCase):
+    question: Question
+    choice: Choice
+    other_question: Question
+    other_choice: Choice
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
