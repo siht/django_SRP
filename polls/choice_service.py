@@ -25,46 +25,38 @@ class IServiceExecutor(Protocol):
         pass
 
 
-class ChoicePullerData(Protocol):
-    def get_choice_data(self) -> ChoiceData:
-        pass
-
-
-class ChoiceFactory(Protocol):
-    def build_choice(self, data: ChoiceData) -> Choice:
-        pass
-
-
-class PersistChoice(Protocol):
-    def save_choice(saelf, choice: Choice) -> Choice:
-        pass
-
-
-class ChoiceGetter(Protocol):
-    def get_choice_from_data(self) -> Choice:
-        pass
-
-
-class UpdateCounterVotesChoice(Protocol):
-    def update_choice_counter(self, choice) -> Choice:
-        pass
-
-
-@dataclass
-class CreateChoice:
-    choice_text: str
-    question_id: int
-
+class ChoicePullerDataMixin:
     def get_choice_data(self) -> ChoiceData:
         return {'choice_text': self.choice_text, 'question_id': self.question_id}
 
+
+class DjangoChoiceFactoryMixin:
     def build_choice(self, data: ChoiceData) -> Choice:
         choice = Choice(**data)
         return choice
 
-    def save_choice(self, choice: Choice) -> Choice:
+
+class DjangoPersistChoiceMixin:
+    def save_choice(saelf, choice: Choice) -> Choice:
         choice.save()
         return choice
+
+
+class DjangoChoiceGetterMixin:
+    def get_choice_from_data(self) -> Choice:
+        return self.data['choice_text']
+
+
+class DjangoUpdateCounterVotesChoiceMixin:
+    def update_choice_counter(self, choice) -> Choice:
+        choice.votes = F('votes') + 1
+        return choice
+
+
+@dataclass
+class CreateChoice(ChoicePullerDataMixin, DjangoChoiceFactoryMixin, DjangoPersistChoiceMixin):
+    choice_text: str
+    question_id: int
 
     def execute(self) -> Choice:
         data = self.get_choice_data()
@@ -74,19 +66,8 @@ class CreateChoice:
 
 
 @dataclass
-class Vote:
+class Vote(DjangoChoiceGetterMixin, DjangoUpdateCounterVotesChoiceMixin, DjangoPersistChoiceMixin):
     data: VoteData
-
-    def get_choice_from_data(self) -> Choice:
-        return self.data['choice_text']
-
-    def update_choice_counter(self, choice) -> Choice:
-        choice.votes = F('votes') + 1
-        return choice
-    
-    def save_choice(saelf, choice: Choice) -> Choice:
-        choice.save()
-        return choice
 
     def execute(self) -> Choice:
         choice = self.get_choice_from_data()

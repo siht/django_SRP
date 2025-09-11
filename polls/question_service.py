@@ -26,35 +26,7 @@ class QuestionData(RequiredQuestionData, OptionalQuestionData):
     pass
 
 
-@runtime_checkable
-class IServiceExecutor(Protocol):
-    def execute(self) -> Any:
-        pass
-
-
-@runtime_checkable
-class IPullerQuestionData(Protocol):
-    def get_question_data(self) -> QuestionData:
-        pass
-
-
-@runtime_checkable
-class IFactoryQuestion(Protocol):
-    def make_question_object(self, question_data: QuestionData) -> Question:
-        pass
-
-
-@runtime_checkable
-class ICreateQuestion(Protocol):
-    def save_question_object(self, question: Question) -> Question:
-        pass
-
-
-@dataclass
-class CreateQuestion:
-    question_text: str
-    pub_date: Optional[datetime] = None
-
+class PullerQuestionDataMixin:
     def get_question_data(self) -> QuestionData:
         question_data: QuestionData = {
             'question_text': self.question_text,
@@ -62,13 +34,23 @@ class CreateQuestion:
         }
         return question_data
 
+
+class DjangoFactoryQuestionMixin:
     def make_question_object(self, question_data: QuestionData) -> Question:
         question = Question(**question_data)
         return question
 
+
+class DjangoCreateQuestionMixin:
     def save_question_object(self, question: Question) -> Question:
         question.save()
         return question
+
+
+@dataclass
+class CreateQuestion(PullerQuestionDataMixin, DjangoFactoryQuestionMixin, DjangoCreateQuestionMixin):
+    question_text: str
+    pub_date: Optional[datetime] = None
 
     def execute(self) -> Question:
         question_data = self.get_question_data()
