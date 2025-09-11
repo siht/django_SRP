@@ -2,10 +2,8 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from .choice_service import vote
-from .models import (
-    Question,
-)
+from .choice_service import Vote
+from .models import Question
 from .question_service import CreateQuestion
 
 
@@ -72,4 +70,5 @@ class FormAnswers(ExtendFormContextMixin, PostInitFormMixin, forms.ModelForm):
             self.fields['choice_text'].queryset = question.choice_set.all()
 
     def save(self, commit=True):
-        return vote(self.cleaned_data)
+        vote_service = Vote(self.cleaned_data)
+        return vote_service.execute()

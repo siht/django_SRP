@@ -1,7 +1,7 @@
 # polls/serializers.py
 from rest_framework import serializers
 
-from .choice_service import create_choice
+from .choice_service import CreateChoice
 from .models import Choice
 
 
@@ -17,4 +17,5 @@ class ChoiceSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         question_id = self.context.get('request').parser_context.get('kwargs').get('pk')
         validated_data.update(question_id=question_id)
-        return create_choice(validated_data)
+        create_choice_service = CreateChoice(**validated_data)
+        return create_choice_service.execute()

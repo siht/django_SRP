@@ -7,8 +7,8 @@ from polls.models import (
 )
 from polls.choice_service import (
     ChoiceData,
-    create_choice,
-    vote,
+    CreateChoice,
+    Vote,
     VoteData,
 )
 
@@ -28,7 +28,8 @@ class CreateChoiceTest(TestCase):
         }
 
         # Llamar a la función
-        choice = create_choice(data)
+        choice_service = CreateChoice(**data)
+        choice = choice_service.execute()
 
         # Verificar que la opción se creó correctamente
         self.assertIsInstance(choice, Choice)
@@ -52,7 +53,8 @@ class VoteTest(TestCase):
         }
         # Llamar a la función varias veces
         for _ in range(3):
-            vote(data)
+            vote_service = Vote(data)
+            vote_service.execute()
         # Verificar que el contador de votos se incrementó correctamente
         choice.refresh_from_db()
         self.assertEqual(choice.votes, 3)
