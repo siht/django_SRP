@@ -2,10 +2,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import (
-    Any,
     Optional,
-    Protocol,
-    runtime_checkable,
     TypedDict,
 )
 
@@ -26,49 +23,44 @@ class QuestionData(RequiredQuestionData, OptionalQuestionData):
     pass
 
 
-@runtime_checkable
-class IServiceExecutor(Protocol):
-    def execute(self) -> Any:
-        pass
+# Implementaciones concretas para CreateQuestion
+def get_question_data(self) -> QuestionData:
+    question_data: QuestionData = {
+        'question_text': self.question_text,
+        'pub_date': self.pub_date if self.pub_date else now(),
+    }
+    return question_data
 
 
-@runtime_checkable
-class IPullerQuestionData(Protocol):
-    def get_question_data(self) -> QuestionData:
-        pass
+def django_make_question_object(self, question_data: QuestionData) -> Question:
+    question = Question(**question_data)
+    return question
 
 
-@runtime_checkable
-class IFactoryQuestion(Protocol):
-    def make_question_object(self, question_data: QuestionData) -> Question:
-        pass
+def django_save_question_object(self, question: Question) -> Question:
+    question.save()
+    return question
 
 
-@runtime_checkable
-class ICreateQuestion(Protocol):
-    def save_question_object(self, question: Question) -> Question:
-        pass
+# Decorador para inyectar métodos en una clase
+def inject_methods(**methods):
+    def decorator(cls):
+        for name, method in methods.items():
+            setattr(cls, name, method)
+        return cls
+    return decorator
 
 
+# Aplicamos monkey patching a CreateQuestion
+@inject_methods(
+    get_question_data=get_question_data,
+    make_question_object=django_make_question_object,
+    save_question_object=django_save_question_object
+)
 @dataclass
 class CreateQuestion:
     question_text: str
     pub_date: Optional[datetime] = None
-
-    def get_question_data(self) -> QuestionData:
-        question_data: QuestionData = {
-            'question_text': self.question_text,
-            'pub_date': self.pub_date if self.pub_date else now(),
-        }
-        return question_data
-
-    def make_question_object(self, question_data: QuestionData) -> Question:
-        question = Question(**question_data)
-        return question
-
-    def save_question_object(self, question: Question) -> Question:
-        question.save()
-        return question
 
     def execute(self) -> Question:
         question_data = self.get_question_data()
