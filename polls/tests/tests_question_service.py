@@ -9,7 +9,7 @@ from django.test import TestCase
 
 from polls.models import Question
 from polls.question_service import (
-    CreateQuestion,
+    create_question_service,
     QuestionData,
 )
 
@@ -28,8 +28,8 @@ class CreateQuestionTest(TestCase):
         }
 
         # Llamar a la función
-        create_question_service = CreateQuestion(**data)
-        question = create_question_service.execute()
+        _create_question_service = create_question_service(**data)
+        question = _create_question_service.execute()
         # Verificar que la pregunta se creó correctamente
         self.assertIsInstance(question, Question)
         self.assertEqual(question.question_text, '¿Cuál es tu color favorito?')

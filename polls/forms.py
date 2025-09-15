@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 from .choice_service import Vote
 from .models import Question
-from .question_service import CreateQuestion
+from .question_service import create_question_service
 
 
 class ExtendFormContextMixin:
@@ -48,8 +48,8 @@ class FormQuestion(forms.ModelForm):
         # por ejemplo:
         # pk = self.context.get('request').parser_context.get('kwargs').get('pk')
         # data.update({'pk'}: pk)
-        create_question_service = CreateQuestion(**data)
-        return create_question_service.execute() # y esta función deberá regresar un objeto que se alinee a lo que el serializador pida
+        _create_question_service = create_question_service(**data)
+        return _create_question_service.execute() # y esta función deberá regresar un objeto que se alinee a lo que el serializador pida
 
 
 class FormAnswers(ExtendFormContextMixin, PostInitFormMixin, forms.ModelForm):
