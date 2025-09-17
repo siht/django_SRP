@@ -2,15 +2,13 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import (
-    Any,
     Optional,
     Protocol,
-    runtime_checkable,
     TypedDict,
+    Any,
+    runtime_checkable
 )
-
 from django.utils.timezone import now
-
 from .models import Question
 
 
@@ -24,6 +22,18 @@ class OptionalQuestionData(TypedDict, total=False):
 
 class QuestionData(RequiredQuestionData, OptionalQuestionData):
     pass
+
+
+class IQuestionDataBuilder(Protocol):
+    def build(self) -> QuestionData: ...
+
+
+class IQuestionFactory(Protocol):
+    def create(self, question_data: QuestionData) -> Question: ...
+
+
+class IQuestionRepository(Protocol):
+    def save(self, question: Question) -> Question: ...
 
 
 @runtime_checkable
@@ -51,27 +61,77 @@ class ICreateQuestion(Protocol):
 
 
 @dataclass
-class CreateQuestion:
+class QuestionDataBuilder:
     question_text: str
     pub_date: Optional[datetime] = None
+    
+    def build(self) -> QuestionData:
+        """
+        Construye y retorna el diccionario de datos para crear una pregunta.
 
-    def get_question_data(self) -> QuestionData:
-        question_data: QuestionData = {
+            >>> builder = QuestionDataBuilder("¿Doctest funciona?")
+            >>> data = builder.build()
+            >>> assert 'question_text' in data
+            >>> assert data['question_text'], '¿Doctest funciona?'
+            >>> assert 'pub_date' in data
+        """
+        return {
             'question_text': self.question_text,
             'pub_date': self.pub_date if self.pub_date else now(),
         }
-        return question_data
 
-    def make_question_object(self, question_data: QuestionData) -> Question:
-        question = Question(**question_data)
-        return question
 
-    def save_question_object(self, question: Question) -> Question:
+@dataclass
+class QuestionFactory:
+    def create(self, question_data: QuestionData) -> Question:
+        """
+        Crea una instancia de Question a partir de datos primitivos.
+
+            >>> factory = QuestionFactory()
+            >>> data = {'question_text': 'Test?', 'pub_date': now()}
+            >>> question = factory.create(data)
+            >>> isinstance(question, Question)
+            True
+            >>> question.question_text
+            'Test?'
+        """
+        return Question(**question_data)
+
+
+@dataclass  
+class QuestionRepository:
+    def save(self, question: Question) -> Question:
+        """
+        Persiste la pregunta en la base de datos. 
+        
+            >>> repo = QuestionRepository()
+            >>> new_question = Question(question_text="Test Save", pub_date=now())
+            >>> saved_question = repo.save(new_question)
+            >>> assert saved_question.id is not None
+        """
         question.save()
         return question
 
+
+@dataclass
+class CreateQuestion:
+    data_builder: IQuestionDataBuilder
+    question_factory: IQuestionFactory
+    question_repository: IQuestionRepository
+    
     def execute(self) -> Question:
-        question_data = self.get_question_data()
-        question = self.make_question_object(question_data)
-        question_saved = self.save_question_object(question)
-        return question_saved
+        question_data = self.data_builder.build()
+        question = self.question_factory.create(question_data)
+        return self.question_repository.save(question)
+
+
+def create_question_service(question_text: str, pub_date: Optional[datetime] = None) -> CreateQuestion:
+    data_builder = QuestionDataBuilder(question_text=question_text, pub_date=pub_date)
+    question_factory = QuestionFactory()
+    question_repository = QuestionRepository()
+    
+    return CreateQuestion(
+        data_builder=data_builder,
+        question_factory=question_factory,
+        question_repository=question_repository
+    )

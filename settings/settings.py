@@ -26,6 +26,8 @@ SECRET_KEY = 'django-insecure-_9qq-t#fy&c78^56(0txfwg*+s@mygqyag+e+b9#(t(0dhhw15
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+TEST_RUNNER = 'settings.test_runner.UnifiedTestRunner'
+
 ALLOWED_HOSTS = []
 
 
