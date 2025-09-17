@@ -50,7 +50,7 @@ class ChoiceSerializerTest(TestCase):
         self.assertFalse(serializer.is_valid())
         self.assertIn('choice_text', serializer.errors)
 
-    @patch('polls.serializers.CreateChoice')
+    @patch('polls.serializers.create_choice_service')
     def test_create(self, mock_create_choice):
         """
         Prueba que el método create llama a create_choice con los datos correctos.
