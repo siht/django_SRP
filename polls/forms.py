@@ -70,5 +70,8 @@ class FormAnswers(ExtendFormContextMixin, PostInitFormMixin, forms.ModelForm):
             self.fields['choice_text'].queryset = question.choice_set.all()
 
     def save(self, commit=True):
-        _vote_service = vote_service(self.cleaned_data)
-        return _vote_service.execute()
+        choice = self.cleaned_data['choice_text']
+        _vote_service = vote_service(choice.id)
+        _vote_service.execute()
+        choice.refresh_from_db()
+        return choice
