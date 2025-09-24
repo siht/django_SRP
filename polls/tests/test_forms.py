@@ -4,7 +4,7 @@ from unittest.mock import patch
 from django.test import TestCase
 
 from polls.forms import FormQuestion
-
+from polls.question_service import QuestionCreateDTO
 
 class FormQuestionTest(TestCase):
     def test_valid_data(self):
@@ -42,5 +42,5 @@ class FormQuestionTest(TestCase):
         form.save()
         # Verificar que CreateQuestion fue llamado con los datos correctos
         mock_create_question.assert_called_once_with(
-            **{'question_text': '¿Cuál es tu color favorito?'}
+            QuestionCreateDTO(question_text='¿Cuál es tu color favorito?')
         )

@@ -22,4 +22,6 @@ class ChoiceSerializer(serializers.ModelSerializer):
         validated_data.update(question_id=question_id)
         choice_dto = ChoiceCreateDTO(question_id=question_id, text=validated_data['choice_text'], votes=None)
         _create_choice_service = create_choice_service(choice_dto)
-        return _create_choice_service.execute()
+        choice_dto = _create_choice_service.execute()
+        choice_dto.choice_text = choice_dto.text
+        return choice_dto

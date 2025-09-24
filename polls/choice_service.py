@@ -12,15 +12,6 @@ from django.db.models import F
 from .models import Choice
 
 
-class ChoiceData(TypedDict):
-    choice_text: str
-    question_id: int
-
-
-class VoteData(TypedDict):
-    choice_text: Choice
-
-
 class RepositoryError(Exception):
     """Excepción base para todos los errores relacionados con el repositorio."""
     pass

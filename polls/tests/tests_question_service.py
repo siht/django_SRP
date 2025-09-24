@@ -7,10 +7,10 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from polls.models import Question
 from polls.question_service import (
     create_question_service,
-    QuestionData,
+    QuestionCreateDTO,
+    QuestionDTO,
 )
 
 
@@ -23,15 +23,12 @@ class CreateQuestionTest(TestCase):
         mocked_now_value = datetime(2023, 10, 1, 12, 0, 0, tzinfo=timezone.utc)
         mock_now.return_value = mocked_now_value
         # Datos de entrada
-        data: QuestionData = {
-            'question_text': '¿Cuál es tu color favorito?',
-        }
-
+        data = QuestionCreateDTO(question_text='¿Cuál es tu color favorito?')
         # Llamar a la función
-        _create_question_service = create_question_service(**data)
+        _create_question_service = create_question_service(data)
         question = _create_question_service.execute()
         # Verificar que la pregunta se creó correctamente
-        self.assertIsInstance(question, Question)
+        self.assertIsInstance(question, QuestionDTO)
         self.assertEqual(question.question_text, '¿Cuál es tu color favorito?')
         self.assertIsNotNone(question.pub_date)
         self.assertTrue(question.id)  # Verificar que se guardó en la base de datos
