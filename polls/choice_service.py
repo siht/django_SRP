@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import (
     Any,
     Protocol,
-    TypedDict,
     runtime_checkable,
     Optional,
 )
