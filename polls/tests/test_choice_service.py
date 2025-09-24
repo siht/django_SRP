@@ -6,10 +6,10 @@ from polls.models import (
     Question,
 )
 from polls.choice_service import (
-    ChoiceData,
+    ChoiceCreateDTO,
+    ChoiceDTO,
     create_choice_service,
     vote_service,
-    VoteData,
 )
 
 
@@ -22,19 +22,17 @@ class CreateChoiceTest(TestCase):
         question = Question.objects.create(question_text='¿Cuál es tu color favorito?', pub_date=now())
 
         # Datos de entrada
-        data: ChoiceData = {
-            'choice_text': 'Rojo',
-            'question_id': question.id
-        }
+        choice_data = ChoiceCreateDTO(question_id=question.id, text='Rojo', votes=None)
 
         # Llamar a la función
-        _choice_service = create_choice_service(**data)
+        _choice_service = create_choice_service(choice_data)
         choice = _choice_service.execute()
 
         # Verificar que la opción se creó correctamente
-        self.assertIsInstance(choice, Choice)
-        self.assertEqual(choice.choice_text, 'Rojo')
-        self.assertEqual(choice.question, question)
+        self.assertIsInstance(choice, ChoiceDTO)
+        self.assertIsNotNone(choice.id)
+        self.assertEqual(choice.text, 'Rojo')
+        self.assertEqual(choice.question_id, question.id)
 
 
 class VoteTest(TestCase):
@@ -47,13 +45,9 @@ class VoteTest(TestCase):
         # o si tiene un escenario usar los fixtures para cargar esa data
         question = Question.objects.create(question_text='¿Cuál es tu color favorito?', pub_date=now())
         choice = Choice.objects.create(choice_text='Rojo', question=question, votes=0)
-        # Datos de entrada
-        data: VoteData = {
-            'choice_text': choice
-        }
         # Llamar a la función varias veces
         for _ in range(3):
-            _vote_service = vote_service(data)
+            _vote_service = vote_service(choice_id=choice.id)
             _vote_service.execute()
         # Verificar que el contador de votos se incrementó correctamente
         choice.refresh_from_db()

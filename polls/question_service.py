@@ -12,6 +12,19 @@ from django.utils.timezone import now
 from .models import Question
 
 
+class RepositoryError(Exception):
+    """Excepción base para todos los errores relacionados con el repositorio."""
+    pass
+
+
+class QuestionNotFound(RepositoryError):
+    """
+    Se lanza cuando un Question con el ID especificado no puede ser encontrado.
+    """
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 class RequiredQuestionData(TypedDict):
     question_text: str
 
@@ -24,16 +37,25 @@ class QuestionData(RequiredQuestionData, OptionalQuestionData):
     pass
 
 
-class IQuestionDataBuilder(Protocol):
-    def build(self) -> QuestionData: ...
+@dataclass
+class QuestionDTO:
+    """Entidad de dominio - solo datos, sin lógica"""
+    id: int
+    question_text: str
+    pub_date: datetime
 
 
-class IQuestionFactory(Protocol):
-    def create(self, question_data: QuestionData) -> Question: ...
+@dataclass
+class QuestionCreateDTO:
+    """Entidad de dominio - solo datos, sin lógica"""
+    question_text: str
+    pub_date: Optional[datetime] = None
 
 
 class IQuestionRepository(Protocol):
-    def save(self, question: Question) -> Question: ...
+    def create(self, question: QuestionCreateDTO) -> QuestionDTO: ...
+    def get_by_id(self, question_id: int) -> QuestionDTO | None | QuestionNotFound: ...
+    def get_recent(self, limit: int=5) -> list[QuestionDTO]: ...
 
 
 @runtime_checkable
@@ -42,96 +64,65 @@ class IServiceExecutor(Protocol):
         pass
 
 
-@runtime_checkable
-class IPullerQuestionData(Protocol):
-    def get_question_data(self) -> QuestionData:
-        pass
-
-
-@runtime_checkable
-class IFactoryQuestion(Protocol):
-    def make_question_object(self, question_data: QuestionData) -> Question:
-        pass
-
-
-@runtime_checkable
-class ICreateQuestion(Protocol):
-    def save_question_object(self, question: Question) -> Question:
-        pass
-
-
-@dataclass
-class QuestionDataBuilder:
-    question_text: str
-    pub_date: Optional[datetime] = None
-    
-    def build(self) -> QuestionData:
-        """
-        Construye y retorna el diccionario de datos para crear una pregunta.
-
-            >>> builder = QuestionDataBuilder("¿Doctest funciona?")
-            >>> data = builder.build()
-            >>> assert 'question_text' in data
-            >>> assert data['question_text'], '¿Doctest funciona?'
-            >>> assert 'pub_date' in data
-        """
-        return {
-            'question_text': self.question_text,
-            'pub_date': self.pub_date if self.pub_date else now(),
-        }
-
-
-@dataclass
-class QuestionFactory:
-    def create(self, question_data: QuestionData) -> Question:
-        """
-        Crea una instancia de Question a partir de datos primitivos.
-
-            >>> factory = QuestionFactory()
-            >>> data = {'question_text': 'Test?', 'pub_date': now()}
-            >>> question = factory.create(data)
-            >>> isinstance(question, Question)
-            True
-            >>> question.question_text
-            'Test?'
-        """
-        return Question(**question_data)
-
-
 @dataclass  
 class QuestionRepository:
-    def save(self, question: Question) -> Question:
+    def create(self, question: QuestionCreateDTO) -> QuestionDTO:
         """
         Persiste la pregunta en la base de datos. 
         
             >>> repo = QuestionRepository()
-            >>> new_question = Question(question_text="Test Save", pub_date=now())
-            >>> saved_question = repo.save(new_question)
-            >>> assert saved_question.id is not None
+            >>> dto = QuestionCreateDTO(question_text="Test Save", pub_date=now())
+            >>> created_question = repo.create(dto)
+            >>> assert created_question.id is not None
+            >>> assert isinstance(created_question, QuestionDTO)
         """
-        question.save()
-        return question
+        create_question_args = {
+            'question_text': question.question_text,
+            'pub_date': question.pub_date if question.pub_date else now()
+        }
+        django_question = Question.objects.create(**create_question_args)
+        question_dto = (
+            QuestionDTO(
+                id=django_question.id,
+                question_text=question.question_text,
+                pub_date=django_question.pub_date
+            )
+        )
+        return question_dto
+
+    def get_by_id(self, question_id: int) -> QuestionDTO | None | QuestionNotFound:
+        try:
+            django_question = (
+                Question.objects
+                .values('id', 'question_text', 'pub_date')
+                .get(id=question_id)
+            )
+        except Question.DoesNotExist as err:
+            raise QuestionNotFound(f"El 'Question' con ID {question_id} no existe.")
+        return QuestionDTO(**django_question)
+
+    def get_recent(self, limit: int=5) -> list[QuestionDTO]:
+        django_recent_questions = (
+            Question.objects
+            .values('id', 'question_text', 'pub_date')
+            .order_by('-pub_date')[:limit]
+        )
+        return [QuestionDTO(**choice) for choice in django_recent_questions]
 
 
 @dataclass
 class CreateQuestion:
-    data_builder: IQuestionDataBuilder
-    question_factory: IQuestionFactory
     question_repository: IQuestionRepository
+    question: QuestionCreateDTO
     
-    def execute(self) -> Question:
-        question_data = self.data_builder.build()
-        question = self.question_factory.create(question_data)
-        return self.question_repository.save(question)
+    def execute(self) -> QuestionDTO:
+        return self.question_repository.create(self.question)
 
 
-def create_question_service(question_text: str, pub_date: Optional[datetime] = None) -> CreateQuestion:
-    data_builder = QuestionDataBuilder(question_text=question_text, pub_date=pub_date)
-    question_factory = QuestionFactory()
+def create_question_service(question: QuestionCreateDTO) -> CreateQuestion:
     question_repository = QuestionRepository()
     
     return CreateQuestion(
-        data_builder=data_builder,
-        question_factory=question_factory,
-        question_repository=question_repository
+        question_repository=question_repository,
+        question=question
     )
