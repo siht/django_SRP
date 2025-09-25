@@ -9,7 +9,6 @@ from django.test import TestCase
 
 from polls.question_service import (
     create_question_service,
-    QuestionCreateDTO,
     QuestionDTO,
 )
 
@@ -23,7 +22,7 @@ class CreateQuestionTest(TestCase):
         mocked_now_value = datetime(2023, 10, 1, 12, 0, 0, tzinfo=timezone.utc)
         mock_now.return_value = mocked_now_value
         # Datos de entrada
-        data = QuestionCreateDTO(question_text='¿Cuál es tu color favorito?')
+        data = QuestionDTO(question_text='¿Cuál es tu color favorito?')
         # Llamar a la función
         _create_question_service = create_question_service(data)
         question = _create_question_service.execute()

@@ -14,6 +14,7 @@ from .serializers import (
     ChoiceSerializer,
     HolaSerializer,
 )
+from .question_service import QuestionRepository
 
 
 class AddViewNRequestToContextFormMixin:
@@ -35,11 +36,13 @@ class QuestionListCreateIndexView(generic.CreateView):
     template_name = 'polls/index.html'
     form_class = FormQuestion
     success_url = reverse_lazy('polls:index')
+    repo = QuestionRepository()
 
     def get_context_data(self, **kwargs):
         context =  super().get_context_data(**kwargs)
         latest_question_list = (
-            Question.objects.order_by('-pub_date')[:5]
+            # Question.objects.order_by('-pub_date')[:5]
+            self.repo.get_recent()
         )
         context.update(latest_question_list=latest_question_list)
         return context

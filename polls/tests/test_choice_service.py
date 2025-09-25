@@ -6,7 +6,6 @@ from polls.models import (
     Question,
 )
 from polls.choice_service import (
-    ChoiceCreateDTO,
     ChoiceDTO,
     create_choice_service,
     vote_service,
@@ -22,7 +21,7 @@ class CreateChoiceTest(TestCase):
         question = Question.objects.create(question_text='¿Cuál es tu color favorito?', pub_date=now())
 
         # Datos de entrada
-        choice_data = ChoiceCreateDTO(question_id=question.id, text='Rojo', votes=None)
+        choice_data = ChoiceDTO(question_id=question.id, text='Rojo')
 
         # Llamar a la función
         _choice_service = create_choice_service(choice_data)

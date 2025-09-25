@@ -11,6 +11,14 @@ from django.db.models import F
 from .models import Choice
 
 
+class ModelError(Exception):
+    """Excepción base para errores de llenado en el modelo"""
+
+
+class ChoiceDataError(ModelError):
+    """Se lanza cuando hay inconsistencia de datos"""
+
+
 class RepositoryError(Exception):
     """Excepción base para todos los errores relacionados con el repositorio."""
     pass
@@ -26,24 +34,18 @@ class ChoiceNotFound(RepositoryError):
 
 @dataclass
 class ChoiceDTO:
-    id: int
-    question_id: int
     text: str
-    votes: int
-
-
-@dataclass
-class ChoiceCreateDTO:
-    question_id: int
-    text: str
-    votes: Optional[int]
-
-
-@dataclass
-class ChoiceUpdateDTO:
-    id: int
-    text: Optional[str] = None
+    question_id: Optional[int] = None
+    id: Optional[int] = None
     votes: Optional[int] = None
+
+    def __post_init__(self):
+        no_ingresaron_votos_iniciales = self.votes is None
+        if no_ingresaron_votos_iniciales:
+            self.votes = 0
+        es_un_dto_para_creacion = not self.id and not self.question_id
+        if es_un_dto_para_creacion:
+            raise ChoiceDataError('es necesario el campo question_id para la creacion de un Choice')
 
 
 @runtime_checkable
@@ -69,14 +71,14 @@ class IChoiceRepository(Protocol):
         """Actualiza el número de votos para un Choice específico."""
         ...
 
-    def create(self, choice: ChoiceCreateDTO) -> ChoiceDTO:
+    def create(self, choice: ChoiceDTO) -> ChoiceDTO:
         """
         Crea un nuevo Choice.
         Retorna el DTO del Choice creado.
         """
         ...
 
-    def update(self, choice: ChoiceUpdateDTO) -> ChoiceDTO:
+    def update(self, choice: ChoiceDTO) -> ChoiceDTO | None:
         """
         Actualiza un Choice existente.
         Retorna el DTO del Choice actualizado.
@@ -181,7 +183,7 @@ class DjangoChoiceRepository:
         rows_affected = Choice.objects.filter(id=choice_id).update(votes=F('votes') + 1)
         return rows_affected
 
-    def create(self, choice: ChoiceCreateDTO) -> ChoiceDTO:
+    def create(self, choice: ChoiceDTO) -> ChoiceDTO:
         """
         Persiste una opción en la base de datos.
         
@@ -189,25 +191,23 @@ class DjangoChoiceRepository:
             >>> from .models import Question
             >>> question = Question(question_text="se va a hacer o no se va a hacer", pub_date=now())
             >>> question.save()
-            >>> choice = ChoiceCreateDTO(question_id=question.id, text='no', votes=None)
+            >>> choice = ChoiceDTO(question_id=question.id, text='no')
             >>> repo = DjangoChoiceRepository()
             >>> saved_choice = repo.create(choice)
             >>> assert saved_choice.id is not None
         """
+        if not choice.question_id:
+            raise ChoiceDataError() # esto no debería pasar por la validación del DTO, pero mypy no perdona
         new_choice = Choice.objects.create(
             question_id=choice.question_id,
             choice_text=choice.text,
             votes=choice.votes or 0
         )
         # Aquí creas y retornas la instancia del DTO con el ID generado por la base de datos
-        return ChoiceDTO(
-            id=new_choice.id,
-            question_id=new_choice.question_id,
-            text=new_choice.choice_text,
-            votes=new_choice.votes
-        )
+        choice.id = new_choice.id
+        return choice
 
-    def update(self, choice: ChoiceUpdateDTO) -> ChoiceDTO:
+    def update(self, choice: ChoiceDTO) -> ChoiceDTO | None:
         """
         Actualiza una opción en la base de datos.
 
@@ -218,17 +218,19 @@ class DjangoChoiceRepository:
             >>> choice = Choice(question=question, choice_text='no')
             >>> choice.save()
             >>> repo = DjangoChoiceRepository()
-            >>> dto_choice = ChoiceUpdateDTO(id=choice.id, text='sí, lo vamos a hacer')
+            >>> dto_choice = ChoiceDTO(id=choice.id, text='sí, lo vamos a hacer')
             >>> updated_choice = repo.update(dto_choice)
             >>> assert updated_choice.id is not None
         """
-        data_for_update = {}
-        if choice.text:
-            data_for_update.update(choice_text=choice.text)
-        if choice.votes:
-            data_for_update.update(votes=choice.votes)
+        if choice.id is None:
+            return None
+        data_not_null_for_update: dict[str, Any] = {}
+        if choice.text is not None:
+            data_not_null_for_update.update(choice_text=choice.text)
+        if choice.votes is not None:
+            data_not_null_for_update.update(votes=choice.votes)
         rows_affected = Choice.objects.filter(id=choice.id).update(
-            **data_for_update
+            **data_not_null_for_update
         )
         if rows_affected > 0:
             # Aquí creas y retornas la instancia del DTO con la información actualizada.
@@ -267,7 +269,7 @@ class DjangoChoiceRepository:
 @dataclass
 class CreateChoice:
     choice_repository: IChoiceRepository
-    choice_data: ChoiceCreateDTO
+    choice_data: ChoiceDTO
 
     def execute(self) -> ChoiceDTO:
         return self.choice_repository.create(self.choice_data)
@@ -284,7 +286,7 @@ class Vote:
         return choice
 
 
-def create_choice_service(choice_data: ChoiceCreateDTO) -> CreateChoice:
+def create_choice_service(choice_data: ChoiceDTO) -> CreateChoice:
     choice_repository = DjangoChoiceRepository()
     return CreateChoice(choice_repository=choice_repository, choice_data=choice_data)
 

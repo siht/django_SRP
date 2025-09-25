@@ -10,7 +10,7 @@ from polls.models import (
     Question,
 )
 from polls.serializers import ChoiceSerializer
-from polls.choice_service import ChoiceCreateDTO
+from polls.choice_service import ChoiceDTO
 
 
 class ChoiceSerializerTest(TestCase):
@@ -71,5 +71,5 @@ class ChoiceSerializerTest(TestCase):
         # Llamar al método create
         serializer.create(serializer.validated_data)
         # Verificar que create_choice fue llamado con los datos correctos
-        expected_data = ChoiceCreateDTO(question_id=question.id, text='Rojo', votes=None)
+        expected_data = ChoiceDTO(question_id=question.id, text='Rojo')
         mock_create_choice.assert_called_once_with(expected_data)
