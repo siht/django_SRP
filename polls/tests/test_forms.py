@@ -4,6 +4,9 @@ from unittest.mock import patch
 from django.test import TestCase
 
 from polls.forms import FormQuestion
+from business_logic.dtos import QuestionDTO
+
+
 
 class FormQuestionTest(TestCase):
     def test_valid_data(self):
@@ -40,10 +43,7 @@ class FormQuestionTest(TestCase):
         # Llamar a save()
         form.save()
         # Verificar que CreateQuestion fue llamado con los datos correctos
-        mock_create_question.assert_called_once()
-        call_args = mock_create_question.call_args[0]  # args posicionales
-        called_dto = call_args[0] if call_args else mock_create_question.call_args[1]['question']
-        self.assertEqual(called_dto.question_text, '¿Cuál es tu color favorito?')
-        self.assertIsNone(called_dto.id)
-        # No verificamos la fecha exacta, solo que esté presente
-        self.assertIsNotNone(called_dto.pub_date)
+        mock_create_question.assert_called_once_with(
+            QuestionDTO(question_text='¿Cuál es tu color favorito?')
+        )
+

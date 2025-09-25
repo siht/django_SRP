@@ -14,7 +14,7 @@ from .serializers import (
     ChoiceSerializer,
     HolaSerializer,
 )
-from .question_service import QuestionRepository
+from .question_service import DjangoQuestionRepository
 
 
 class AddViewNRequestToContextFormMixin:
@@ -36,7 +36,7 @@ class QuestionListCreateIndexView(generic.CreateView):
     template_name = 'polls/index.html'
     form_class = FormQuestion
     success_url = reverse_lazy('polls:index')
-    repo = QuestionRepository()
+    repo = DjangoQuestionRepository()
 
     def get_context_data(self, **kwargs):
         context =  super().get_context_data(**kwargs)
