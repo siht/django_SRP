@@ -4,7 +4,6 @@ from datetime import datetime
 from typing import (
     Optional,
     Protocol,
-    TypedDict,
     Any,
     runtime_checkable
 )
@@ -25,35 +24,23 @@ class QuestionNotFound(RepositoryError):
         super().__init__(message)
 
 
-class RequiredQuestionData(TypedDict):
-    question_text: str
-
-
-class OptionalQuestionData(TypedDict, total=False):
-    pub_date: datetime
-
-
-class QuestionData(RequiredQuestionData, OptionalQuestionData):
-    pass
-
-
 @dataclass
 class QuestionDTO:
     """Entidad de dominio - solo datos, sin lógica"""
-    id: int
     question_text: str
-    pub_date: datetime
-
-
-@dataclass
-class QuestionCreateDTO:
-    """Entidad de dominio - solo datos, sin lógica"""
-    question_text: str
+    id: Optional[int] = None
     pub_date: Optional[datetime] = None
+
+    def __post_init__(self):
+        es_para_nueva_creacion_y_no_tiene_fecha = (
+            not self.id and not self.pub_date
+        )
+        if es_para_nueva_creacion_y_no_tiene_fecha:
+            self.pub_date = now()
 
 
 class IQuestionRepository(Protocol):
-    def create(self, question: QuestionCreateDTO) -> QuestionDTO: ...
+    def create(self, question: QuestionDTO) -> QuestionDTO: ...
     def get_by_id(self, question_id: int) -> QuestionDTO | None | QuestionNotFound: ...
     def get_recent(self, limit: int=5) -> list[QuestionDTO]: ...
 
@@ -66,19 +53,19 @@ class IServiceExecutor(Protocol):
 
 @dataclass  
 class QuestionRepository:
-    def create(self, question: QuestionCreateDTO) -> QuestionDTO:
+    def create(self, question: QuestionDTO) -> QuestionDTO:
         """
         Persiste la pregunta en la base de datos. 
         
             >>> repo = QuestionRepository()
-            >>> dto = QuestionCreateDTO(question_text="Test Save", pub_date=now())
+            >>> dto = QuestionDTO(question_text="Test Save", pub_date=now())
             >>> created_question = repo.create(dto)
             >>> assert created_question.id is not None
             >>> assert isinstance(created_question, QuestionDTO)
         """
         create_question_args = {
             'question_text': question.question_text,
-            'pub_date': question.pub_date if question.pub_date else now()
+            'pub_date': question.pub_date
         }
         django_question = Question.objects.create(**create_question_args)
         question_dto = (
@@ -113,13 +100,13 @@ class QuestionRepository:
 @dataclass
 class CreateQuestion:
     question_repository: IQuestionRepository
-    question: QuestionCreateDTO
+    question: QuestionDTO
     
     def execute(self) -> QuestionDTO:
         return self.question_repository.create(self.question)
 
 
-def create_question_service(question: QuestionCreateDTO) -> CreateQuestion:
+def create_question_service(question: QuestionDTO) -> CreateQuestion:
     question_repository = QuestionRepository()
     
     return CreateQuestion(
