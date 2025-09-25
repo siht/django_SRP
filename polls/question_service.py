@@ -1,68 +1,32 @@
 # polls/question_service.py
 from dataclasses import dataclass
-from datetime import datetime
-from typing import (
-    Optional,
-    Protocol,
-    Any,
-    runtime_checkable
-)
 from django.utils.timezone import now
+from functools import partial
+
+from business_logic.dtos import QuestionDTO
+from business_logic.exceptions import QuestionNotFound
+from business_logic.use_cases import CreateQuestion
+
 from .models import Question
 
 
-class RepositoryError(Exception):
-    """Excepción base para todos los errores relacionados con el repositorio."""
-    pass
-
-
-class QuestionNotFound(RepositoryError):
-    """
-    Se lanza cuando un Question con el ID especificado no puede ser encontrado.
-    """
-    def __init__(self, message: str):
-        super().__init__(message)
-
-
-@dataclass
-class QuestionDTO:
-    """Entidad de dominio - solo datos, sin lógica"""
-    question_text: str
-    id: Optional[int] = None
-    pub_date: Optional[datetime] = None
-
-    def __post_init__(self):
-        es_para_nueva_creacion_y_no_tiene_fecha = (
-            not self.id and not self.pub_date
-        )
-        if es_para_nueva_creacion_y_no_tiene_fecha:
-            self.pub_date = now()
-
-
-class IQuestionRepository(Protocol):
-    def create(self, question: QuestionDTO) -> QuestionDTO: ...
-    def get_by_id(self, question_id: int) -> QuestionDTO | None | QuestionNotFound: ...
-    def get_recent(self, limit: int=5) -> list[QuestionDTO]: ...
-
-
-@runtime_checkable
-class IServiceExecutor(Protocol):
-    def execute(self) -> Any:
-        pass
-
-
 @dataclass  
-class QuestionRepository:
+class DjangoQuestionRepository:
     def create(self, question: QuestionDTO) -> QuestionDTO:
         """
         Persiste la pregunta en la base de datos. 
         
-            >>> repo = QuestionRepository()
+            >>> repo = DjangoQuestionRepository()
             >>> dto = QuestionDTO(question_text="Test Save", pub_date=now())
             >>> created_question = repo.create(dto)
             >>> assert created_question.id is not None
             >>> assert isinstance(created_question, QuestionDTO)
         """
+        es_para_nueva_creacion_y_no_tiene_fecha = (
+            not question.id and not question.pub_date
+        )
+        if es_para_nueva_creacion_y_no_tiene_fecha:
+            question.pub_date = now()
         create_question_args = {
             'question_text': question.question_text,
             'pub_date': question.pub_date
@@ -97,17 +61,8 @@ class QuestionRepository:
         return [QuestionDTO(**choice) for choice in django_recent_questions]
 
 
-@dataclass
-class CreateQuestion:
-    question_repository: IQuestionRepository
-    question: QuestionDTO
-    
-    def execute(self) -> QuestionDTO:
-        return self.question_repository.create(self.question)
-
-
 def create_question_service(question: QuestionDTO) -> CreateQuestion:
-    question_repository = QuestionRepository()
+    question_repository = DjangoQuestionRepository()
     
     return CreateQuestion(
         question_repository=question_repository,

@@ -1,95 +1,12 @@
 # polls/choice_service.py
-from dataclasses import dataclass
-from typing import (
-    Any,
-    Protocol,
-    runtime_checkable,
-    Optional,
-)
+from typing import Any
 
 from django.db.models import F
 from .models import Choice
 
-
-class ModelError(Exception):
-    """Excepción base para errores de llenado en el modelo"""
-
-
-class ChoiceDataError(ModelError):
-    """Se lanza cuando hay inconsistencia de datos"""
-
-
-class RepositoryError(Exception):
-    """Excepción base para todos los errores relacionados con el repositorio."""
-    pass
-
-
-class ChoiceNotFound(RepositoryError):
-    """
-    Se lanza cuando un Choice con el ID especificado no puede ser encontrado.
-    """
-    def __init__(self, message: str):
-        super().__init__(message)
-
-
-@dataclass
-class ChoiceDTO:
-    text: str
-    question_id: Optional[int] = None
-    id: Optional[int] = None
-    votes: Optional[int] = None
-
-    def __post_init__(self):
-        no_ingresaron_votos_iniciales = self.votes is None
-        if no_ingresaron_votos_iniciales:
-            self.votes = 0
-        es_un_dto_para_creacion = not self.id and not self.question_id
-        if es_un_dto_para_creacion:
-            raise ChoiceDataError('es necesario el campo question_id para la creacion de un Choice')
-
-
-@runtime_checkable
-class IServiceExecutor(Protocol):
-    def execute(self) -> Any:
-        pass
-
-
-class IChoiceRepository(Protocol):
-    """
-    Define las operaciones mínimas para un repositorio que maneja 'Choice'.
-    """
-    
-    def get_by_id(self, choice_id: int) -> ChoiceDTO | None | ChoiceNotFound:
-        """Obtiene un DTO de un Choice por su ID."""
-        ...
-        
-    def get_all(self) -> list[ChoiceDTO]:
-        """Obtiene una lista de todos los DTOs de Choice."""
-        ...
-
-    def update_votes(self, choice_id: int) -> int:
-        """Actualiza el número de votos para un Choice específico."""
-        ...
-
-    def create(self, choice: ChoiceDTO) -> ChoiceDTO:
-        """
-        Crea un nuevo Choice.
-        Retorna el DTO del Choice creado.
-        """
-        ...
-
-    def update(self, choice: ChoiceDTO) -> ChoiceDTO | None:
-        """
-        Actualiza un Choice existente.
-        Retorna el DTO del Choice actualizado.
-        """
-        ...
-
-    def delete(self, choice_id: int) -> None:
-        """
-        Elimina el Choice por su ID.
-        """
-        ...
+from business_logic.dtos import ChoiceDTO
+from business_logic.exceptions import ChoiceNotFound, ChoiceDataError
+from business_logic.use_cases import CreateChoice, Vote
 
 
 class DjangoChoiceRepository:
@@ -263,27 +180,6 @@ class DjangoChoiceRepository:
             >>> assert not Choice.objects.filter(id=choice_instance.id).exists()
         """
         Choice.objects.filter(id=choice_id).delete()
-
-
-# Casos de uso
-@dataclass
-class CreateChoice:
-    choice_repository: IChoiceRepository
-    choice_data: ChoiceDTO
-
-    def execute(self) -> ChoiceDTO:
-        return self.choice_repository.create(self.choice_data)
-
-
-@dataclass
-class Vote:
-    choice_repository: IChoiceRepository
-    choice_id: int
-
-    def execute(self) -> ChoiceDTO | None | ChoiceNotFound:
-        choice = self.choice_repository.get_by_id(self.choice_id)
-        self.choice_repository.update_votes(self.choice_id)
-        return choice
 
 
 def create_choice_service(choice_data: ChoiceDTO) -> CreateChoice:
