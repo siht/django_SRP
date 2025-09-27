@@ -2,6 +2,7 @@
 
 # como ven nos faltan los test de integración para esta logica de negocio
 from dataclasses import dataclass
+from zope.interface import implementer
 
 from .dtos import (
     ChoiceDTO,
@@ -10,35 +11,40 @@ from .dtos import (
 from .exceptions import ChoiceNotFound
 from .interfaces import (
     IChoiceRepository,
+    ICreateChoiceExecutor,
+    ICreateQuestionExecutor,
     IQuestionRepository,
-    IServiceExecutor, # esta se usa aunque no se vea
+    IVoteExecutor,
 )
 
 
-@dataclass
+@implementer(ICreateQuestionExecutor)
 class CreateQuestion:
-    question_repository: IQuestionRepository
-    question: QuestionDTO
-    
-    def execute(self) -> QuestionDTO:
-        return self.question_repository.create(self.question)
+    def __init__(self, service):
+        self.service = service
+        self.question_repository = IQuestionRepository(self.service)
+
+    def execute(self, question: QuestionDTO) -> QuestionDTO:
+        return self.question_repository.create(question)
 
 
-@dataclass
+@implementer(ICreateChoiceExecutor)
 class CreateChoice:
-    choice_repository: IChoiceRepository
-    choice_data: ChoiceDTO
+    def __init__(self, service):
+        self.service = service
+        self.choice_repository = IChoiceRepository(self.service)
 
-    def execute(self) -> ChoiceDTO:
-        return self.choice_repository.create(self.choice_data)
+    def execute(self, choice_data: ChoiceDTO) -> ChoiceDTO:
+        return self.choice_repository.create(choice_data)
 
 
-@dataclass
+@implementer(IVoteExecutor)
 class Vote:
-    choice_repository: IChoiceRepository
-    choice_id: int
+    def __init__(self, service):
+        self.service = service
+        self.choice_repository = IChoiceRepository(self.service)
 
-    def execute(self) -> ChoiceDTO | None | ChoiceNotFound:
-        choice = self.choice_repository.get_by_id(self.choice_id)
-        self.choice_repository.update_votes(self.choice_id)
+    def execute(self, choice_id: int) -> ChoiceDTO | None | ChoiceNotFound:
+        choice = self.choice_repository.get_by_id(choice_id)
+        self.choice_repository.update_votes(choice_id)
         return choice

@@ -7,8 +7,8 @@ from polls.models import (
 )
 from polls.choice_service import (
     ChoiceDTO,
-    create_choice_service,
-    vote_service,
+    CreateChoice,
+    Vote,
 )
 
 
@@ -24,8 +24,8 @@ class CreateChoiceTest(TestCase):
         choice_data = ChoiceDTO(question_id=question.id, text='Rojo')
 
         # Llamar a la función
-        _choice_service = create_choice_service(choice_data)
-        choice = _choice_service.execute()
+        _choice_service = CreateChoice()
+        choice = _choice_service.execute(choice_data)
 
         # Verificar que la opción se creó correctamente
         self.assertIsInstance(choice, ChoiceDTO)
@@ -45,9 +45,9 @@ class VoteTest(TestCase):
         question = Question.objects.create(question_text='¿Cuál es tu color favorito?', pub_date=now())
         choice = Choice.objects.create(choice_text='Rojo', question=question, votes=0)
         # Llamar a la función varias veces
+        _vote_service = Vote()
         for _ in range(3):
-            _vote_service = vote_service(choice_id=choice.id)
-            _vote_service.execute()
+            _vote_service.execute(choice_id=choice.id)
         # Verificar que el contador de votos se incrementó correctamente
         choice.refresh_from_db()
         self.assertEqual(choice.votes, 3)

@@ -8,7 +8,7 @@ from unittest.mock import patch
 from django.test import TestCase
 
 from polls.question_service import (
-    create_question_service,
+    CreateQuestion,
     QuestionDTO,
 )
 
@@ -24,8 +24,8 @@ class CreateQuestionTest(TestCase):
         # Datos de entrada
         data = QuestionDTO(question_text='¿Cuál es tu color favorito?')
         # Llamar a la función
-        _create_question_service = create_question_service(data)
-        question = _create_question_service.execute()
+        _create_question_service = CreateQuestion()
+        question = _create_question_service.execute(data)
         # Verificar que la pregunta se creó correctamente
         self.assertIsInstance(question, QuestionDTO)
         self.assertEqual(question.question_text, '¿Cuál es tu color favorito?')

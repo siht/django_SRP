@@ -1,8 +1,5 @@
 # business_logic/interfaces.py
-from typing import (
-    Any,
-    Protocol,
-)
+from zope.interface import Interface
 
 from . exceptions import (
     ChoiceNotFound,
@@ -14,50 +11,52 @@ from .dtos import (
 )
 
 
-class IQuestionRepository(Protocol):
-    def create(self, question: QuestionDTO) -> QuestionDTO: ...
-    def get_by_id(self, question_id: int) -> QuestionDTO | None | QuestionNotFound: ...
-    def get_recent(self, limit: int=5) -> list[QuestionDTO]: ...
+class IQuestionRepository(Interface):
+    def create(self, question: QuestionDTO) -> QuestionDTO:
+        """Return a QuestionDTO"""
+
+    def get_by_id(self, question_id: int) -> QuestionDTO | None | QuestionNotFound:
+        """Return a QuestionDTO if a question was found else raise QuestionNotFound"""
+
+    def get_recent(self, limit: int=5) -> list[QuestionDTO]:
+        """Return a list[QuestionDTO] limited by limit"""
 
 
-class IChoiceRepository(Protocol):
+class IChoiceRepository(Interface):
     """
     Define las operaciones mínimas para un repositorio que maneja 'Choice'.
     """
     
     def get_by_id(self, choice_id: int) -> ChoiceDTO | None | ChoiceNotFound:
-        """Obtiene un DTO de un Choice por su ID."""
-        ...
+        """Return a ChoiceDTO if a choice was found else raise ChoiceNotFound."""
         
     def get_all(self) -> list[ChoiceDTO]:
-        """Obtiene una lista de todos los DTOs de Choice."""
-        ...
+        """Return a list[ChoiceDTO] of all choices."""
 
     def update_votes(self, choice_id: int) -> int:
-        """Actualiza el número de votos para un Choice específico."""
-        ...
+        """Return int the actual votes and update vote counter for an specific Choice."""
 
     def create(self, choice: ChoiceDTO) -> ChoiceDTO:
-        """
-        Crea un nuevo Choice.
-        Retorna el DTO del Choice creado.
-        """
-        ...
+        """Return a ChoiceDTO. create a new Choice"""
 
     def update(self, choice: ChoiceDTO) -> ChoiceDTO | None:
-        """
-        Actualiza un Choice existente.
-        Retorna el DTO del Choice actualizado.
-        """
-        ...
+        """Return ChoiceDTO. updates with the info of the ChoiceDTO."""
 
     def delete(self, choice_id: int) -> None:
-        """
-        Elimina el Choice por su ID.
-        """
-        ...
+        """Return None, deletes a Choice by int id"""
 
 
-class IServiceExecutor(Protocol):
-    def execute(self) -> Any:
+class ICreateQuestionExecutor(Interface):
+    def execute(self, question: QuestionDTO) -> QuestionDTO:
+        """Return a QuestionDTO"""
+
+
+class ICreateChoiceExecutor(Interface):
+    def execute(self, choice_data: ChoiceDTO) -> ChoiceDTO:
+        """Return a ChoiceDTO. create a new Choice"""
         pass
+
+
+class IVoteExecutor(Interface):
+    def execute(self, choice_id: int) -> int:
+        """Return int the actual votes and update vote counter for an specific Choice."""

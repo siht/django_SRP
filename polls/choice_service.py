@@ -1,15 +1,20 @@
 # polls/choice_service.py
 from typing import Any
+from zope.interface import implementer
 
 from django.db.models import F
 from .models import Choice
 
 from business_logic.dtos import ChoiceDTO
 from business_logic.exceptions import ChoiceNotFound, ChoiceDataError
-from business_logic.use_cases import CreateChoice, Vote
+from business_logic.interfaces import IChoiceRepository
 
 
+@implementer(IChoiceRepository)
 class DjangoChoiceRepository:
+    def __init__(self, service):
+        self.service = service
+
     def get_by_id(self, choice_id: int) -> ChoiceDTO | None | ChoiceNotFound:
         """Obtiene un DTO de un Choice por su ID.
             
@@ -180,13 +185,3 @@ class DjangoChoiceRepository:
             >>> assert not Choice.objects.filter(id=choice_instance.id).exists()
         """
         Choice.objects.filter(id=choice_id).delete()
-
-
-def create_choice_service(choice_data: ChoiceDTO) -> CreateChoice:
-    choice_repository = DjangoChoiceRepository()
-    return CreateChoice(choice_repository=choice_repository, choice_data=choice_data)
-
-
-def vote_service(choice_id: int) -> Vote:
-    choice_repository = DjangoChoiceRepository()
-    return Vote(choice_repository=choice_repository, choice_id=choice_id)

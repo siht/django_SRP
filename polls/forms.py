@@ -2,10 +2,10 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from .choice_service import vote_service
+from business_logic.use_cases import Vote
 from .models import Question
 from .question_service import (
-    create_question_service,
+    CreateQuestion,
     QuestionDTO,
 )
 
@@ -52,8 +52,8 @@ class FormQuestion(forms.ModelForm):
         # pk = self.context.get('request').parser_context.get('kwargs').get('pk')
         # data.update({'pk'}: pk)
         question_dto = QuestionDTO(**data)
-        _create_question_service = create_question_service(question_dto)
-        return _create_question_service.execute() # y esta función deberá regresar un objeto que se alinee a lo que el serializador pida
+        _create_question_service = CreateQuestion()
+        return _create_question_service.execute(question_dto) # y esta función deberá regresar un objeto que se alinee a lo que el serializador pida
 
 
 class FormAnswers(ExtendFormContextMixin, PostInitFormMixin, forms.ModelForm):
@@ -75,7 +75,7 @@ class FormAnswers(ExtendFormContextMixin, PostInitFormMixin, forms.ModelForm):
 
     def save(self, commit=True):
         choice = self.cleaned_data['choice_text']
-        _vote_service = vote_service(choice.id)
-        _vote_service.execute()
+        _vote_service = Vote()
+        _vote_service.execute(choice.id)
         choice.refresh_from_db()
         return choice

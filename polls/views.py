@@ -36,7 +36,7 @@ class QuestionListCreateIndexView(generic.CreateView):
     template_name = 'polls/index.html'
     form_class = FormQuestion
     success_url = reverse_lazy('polls:index')
-    repo = DjangoQuestionRepository()
+    repo = DjangoQuestionRepository(None)
 
     def get_context_data(self, **kwargs):
         context =  super().get_context_data(**kwargs)
