@@ -3,8 +3,9 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from polls.forms import FormQuestion
 from business_logic.dtos import QuestionDTO
+from polls.forms import FormQuestion
+
 
 
 

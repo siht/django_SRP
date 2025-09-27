@@ -7,10 +7,8 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from polls.question_service import (
-    CreateQuestion,
-    QuestionDTO,
-)
+from business_logic.dtos import QuestionDTO
+from business_logic.use_cases import CreateQuestion
 
 
 class CreateQuestionTest(TestCase):

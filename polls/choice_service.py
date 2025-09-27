@@ -3,11 +3,12 @@ from typing import Any
 from zope.interface import implementer
 
 from django.db.models import F
-from .models import Choice
 
 from business_logic.dtos import ChoiceDTO
 from business_logic.exceptions import ChoiceNotFound, ChoiceDataError
 from business_logic.interfaces import IChoiceRepository
+
+from .models import Choice
 
 
 @implementer(IChoiceRepository)

@@ -1,14 +1,16 @@
 # polls/tests/test_choice_service.py
 from django.test import TestCase
 from django.utils.timezone import now
+
+from business_logic.dtos import ChoiceDTO
+from business_logic.use_cases import (
+    CreateChoice,
+    Vote,
+)
+
 from polls.models import (
     Choice,
     Question,
-)
-from polls.choice_service import (
-    ChoiceDTO,
-    CreateChoice,
-    Vote,
 )
 
 

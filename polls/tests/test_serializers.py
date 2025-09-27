@@ -5,12 +5,12 @@ from unittest.mock import patch
 from django.test import TestCase
 from django.utils.timezone import now
 
+from business_logic.dtos import ChoiceDTO
 from polls.models import (
     Choice,
     Question,
 )
 from polls.serializers import ChoiceSerializer
-from polls.choice_service import ChoiceDTO
 
 
 class ChoiceSerializerTest(TestCase):

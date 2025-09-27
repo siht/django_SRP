@@ -1,9 +1,9 @@
 # polls/serializers.py
 from rest_framework import serializers
 
+from business_logic.dtos import ChoiceDTO
 from business_logic.use_cases import CreateChoice
 
-from .choice_service import ChoiceDTO
 from .models import Choice
 
 

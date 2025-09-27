@@ -2,12 +2,12 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from business_logic.use_cases import Vote
-from .models import Question
-from .question_service import (
+from business_logic.dtos import QuestionDTO
+from business_logic.use_cases import (
     CreateQuestion,
-    QuestionDTO,
+    Vote,
 )
+from .models import Question
 
 
 class ExtendFormContextMixin:
