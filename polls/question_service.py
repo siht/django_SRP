@@ -1,12 +1,10 @@
 # polls/question_service.py
-from dataclasses import dataclass
 from django.utils.timezone import now
 from zope.interface import implementer
 
 from business_logic.dtos import QuestionDTO
 from business_logic.exceptions import QuestionNotFound
 from business_logic.interfaces import IQuestionRepository
-from business_logic.use_cases import CreateQuestion
 
 from .models import Question
 

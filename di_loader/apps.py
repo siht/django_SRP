@@ -1,3 +1,5 @@
+# di_loader/apps.py
+
 from django.apps import AppConfig
 
 
