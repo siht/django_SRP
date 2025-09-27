@@ -6,5 +6,5 @@ class DiLoaderConfig(AppConfig):
     name = 'di_loader'
 
     def ready(self):
-        from . import production_builder
-        production_builder.main()
+        from . import builders
+        builders.production()

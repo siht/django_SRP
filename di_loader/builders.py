@@ -11,7 +11,7 @@ from business_logic.interfaces import (
 from polls.question_service import DjangoQuestionRepository
 from polls.choice_service import DjangoChoiceRepository
 
-def main():
+def production():
     components.registerAdapter(DjangoQuestionRepository, ICreateQuestionExecutor, IQuestionRepository)
     components.registerAdapter(DjangoChoiceRepository, ICreateChoiceExecutor, IChoiceRepository)
     components.registerAdapter(DjangoChoiceRepository, IVoteExecutor, IChoiceRepository)
