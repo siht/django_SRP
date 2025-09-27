@@ -30,6 +30,8 @@ class PostInitFormMixin:
 
 
 class FormQuestion(forms.ModelForm):
+    create_question_service = CreateQuestion()
+
     class Meta:
         model = Question
         fields = ['question_text']
@@ -52,8 +54,7 @@ class FormQuestion(forms.ModelForm):
         # pk = self.context.get('request').parser_context.get('kwargs').get('pk')
         # data.update({'pk'}: pk)
         question_dto = QuestionDTO(**data)
-        _create_question_service = CreateQuestion()
-        return _create_question_service.execute(question_dto) # y esta función deberá regresar un objeto que se alinee a lo que el serializador pida
+        return self.create_question_service.execute(question_dto) # y esta función deberá regresar un objeto que se alinee a lo que el serializador pida
 
 
 class FormAnswers(ExtendFormContextMixin, PostInitFormMixin, forms.ModelForm):
@@ -62,6 +63,7 @@ class FormAnswers(ExtendFormContextMixin, PostInitFormMixin, forms.ModelForm):
         empty_label=None,
         widget=forms.RadioSelect
     )
+    vote_service = Vote()
 
     class Meta:
         model = Question
@@ -75,7 +77,6 @@ class FormAnswers(ExtendFormContextMixin, PostInitFormMixin, forms.ModelForm):
 
     def save(self, commit=True):
         choice = self.cleaned_data['choice_text']
-        _vote_service = Vote()
-        _vote_service.execute(choice.id)
+        self.vote_service.execute(choice.id)
         choice.refresh_from_db()
         return choice

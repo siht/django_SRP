@@ -12,6 +12,8 @@ class HolaSerializer(serializers.Serializer):
 
 
 class ChoiceSerializer(serializers.ModelSerializer):
+    create_choice_service = CreateChoice()
+
     class Meta:
         model = Choice
         fields = ('choice_text',)
@@ -19,8 +21,7 @@ class ChoiceSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         question_id = self.context.get('request').parser_context.get('kwargs').get('pk')
         validated_data.update(question_id=question_id)
-        _create_choice_service = CreateChoice()
         choice_dto = ChoiceDTO(question_id=question_id, text=validated_data['choice_text'])
-        choice_dto = _create_choice_service.execute(choice_dto)
+        choice_dto = self.create_choice_service.execute(choice_dto)
         choice_dto.choice_text = choice_dto.text
         return choice_dto
