@@ -20,9 +20,8 @@ from .interfaces import (
 
 @implementer(ICreateQuestionExecutor)
 class CreateQuestion:
-    def __init__(self, service):
-        self.service = service
-        self.question_repository = IQuestionRepository(self.service)
+    def __init__(self):
+        self.question_repository = IQuestionRepository(self)
 
     def execute(self, question: QuestionDTO) -> QuestionDTO:
         return self.question_repository.create(question)
@@ -30,9 +29,8 @@ class CreateQuestion:
 
 @implementer(ICreateChoiceExecutor)
 class CreateChoice:
-    def __init__(self, service):
-        self.service = service
-        self.choice_repository = IChoiceRepository(self.service)
+    def __init__(self):
+        self.choice_repository = IChoiceRepository(self)
 
     def execute(self, choice_data: ChoiceDTO) -> ChoiceDTO:
         return self.choice_repository.create(choice_data)
@@ -40,9 +38,8 @@ class CreateChoice:
 
 @implementer(IVoteExecutor)
 class Vote:
-    def __init__(self, service):
-        self.service = service
-        self.choice_repository = IChoiceRepository(self.service)
+    def __init__(self):
+        self.choice_repository = IChoiceRepository(self)
 
     def execute(self, choice_id: int) -> ChoiceDTO | None | ChoiceNotFound:
         choice = self.choice_repository.get_by_id(choice_id)

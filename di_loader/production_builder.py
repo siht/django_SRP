@@ -12,7 +12,7 @@ from polls.question_service import DjangoQuestionRepository
 from polls.choice_service import DjangoChoiceRepository
 
 def main():
-    components.registerAdapter(DjangoQuestionRepository, IQuestionRepository, ICreateQuestionExecutor)
-    components.registerAdapter(DjangoChoiceRepository, IChoiceRepository, ICreateChoiceExecutor)
-    components.registerAdapter(DjangoChoiceRepository, IChoiceRepository, IVoteExecutor)
+    components.registerAdapter(DjangoQuestionRepository, ICreateQuestionExecutor, IQuestionRepository)
+    components.registerAdapter(DjangoChoiceRepository, ICreateChoiceExecutor, IChoiceRepository)
+    components.registerAdapter(DjangoChoiceRepository, IVoteExecutor, IChoiceRepository)
 
