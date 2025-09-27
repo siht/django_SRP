@@ -31,7 +31,7 @@ class FormQuestionTest(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('question_text', form.errors)  # Verifica que hay un error en 'question_text'
 
-    @patch('polls.forms.create_question_service')
+    @patch('polls.forms.CreateQuestion.execute')
     def test_save(self, mock_create_question):
         """
         Prueba que el formulario guarda los datos correctamente.

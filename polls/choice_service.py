@@ -27,7 +27,7 @@ class DjangoChoiceRepository:
             >>> choice_instance = Choice.objects.create(question=question, choice_text="azul", votes=10)
             
             # Instanciamos el repositorio
-            >>> repo = DjangoChoiceRepository()
+            >>> repo = DjangoChoiceRepository(None)
             
             # Caso 1: El objeto existe, retorna un DTO
             >>> result = repo.get_by_id(choice_instance.id)
@@ -65,7 +65,7 @@ class DjangoChoiceRepository:
         >>> choice2 = Choice.objects.create(question=question1, choice_text="Opción 2", votes=10)
         
         # Instanciamos el repositorio
-        >>> repo = DjangoChoiceRepository()
+        >>> repo = DjangoChoiceRepository(None)
         
         # Obtenemos todos los DTOs
         >>> all_choices = repo.get_all()
@@ -96,7 +96,7 @@ class DjangoChoiceRepository:
             >>> choice = Choice(question=question, choice_text='no')
             >>> choice.save()
             >>> votes = choice.votes
-            >>> repo = DjangoChoiceRepository()
+            >>> repo = DjangoChoiceRepository(None)
             >>> id_choice = choice.id
             >>> updated_choice = repo.update_votes(id_choice)
             >>> choice.refresh_from_db()
@@ -115,7 +115,7 @@ class DjangoChoiceRepository:
             >>> question = Question(question_text="se va a hacer o no se va a hacer", pub_date=now())
             >>> question.save()
             >>> choice = ChoiceDTO(question_id=question.id, text='no')
-            >>> repo = DjangoChoiceRepository()
+            >>> repo = DjangoChoiceRepository(None)
             >>> saved_choice = repo.create(choice)
             >>> assert saved_choice.id is not None
         """
@@ -140,7 +140,7 @@ class DjangoChoiceRepository:
             >>> question.save()
             >>> choice = Choice(question=question, choice_text='no')
             >>> choice.save()
-            >>> repo = DjangoChoiceRepository()
+            >>> repo = DjangoChoiceRepository(None)
             >>> dto_choice = ChoiceDTO(id=choice.id, text='sí, lo vamos a hacer')
             >>> updated_choice = repo.update(dto_choice)
             >>> assert updated_choice.id is not None
@@ -180,7 +180,7 @@ class DjangoChoiceRepository:
             
             >>> assert Choice.objects.filter(id=choice_instance.id).exists()
 
-            >>> repo = DjangoChoiceRepository()
+            >>> repo = DjangoChoiceRepository(None)
             >>> repo.delete(choice_instance.id)
 
             >>> assert not Choice.objects.filter(id=choice_instance.id).exists()

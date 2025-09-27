@@ -20,7 +20,7 @@ class DjangoQuestionRepository:
         """
         Persiste la pregunta en la base de datos. 
         
-            >>> repo = DjangoQuestionRepository()
+            >>> repo = DjangoQuestionRepository(None)
             >>> dto = QuestionDTO(question_text="Test Save", pub_date=now())
             >>> created_question = repo.create(dto)
             >>> assert created_question.id is not None
@@ -63,12 +63,3 @@ class DjangoQuestionRepository:
             .order_by('-pub_date')[:limit]
         )
         return [QuestionDTO(**choice) for choice in django_recent_questions]
-
-
-def create_question_service(question: QuestionDTO) -> CreateQuestion:
-    question_repository = DjangoQuestionRepository()
-    
-    return CreateQuestion(
-        question_repository=question_repository,
-        question=question
-    )
