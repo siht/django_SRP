@@ -19,7 +19,7 @@ from .interfaces import (
 
 @implementer(ICreateQuestionExecutor)
 class CreateQuestion:
-    def __init__(self):
+    def __init__(self, *args, **kwargs): #  podría cachar el servicio que me está llamando, pero no hace falta, así que sólo pondre los args y kwargs, para que pase silenciosamente
         self.question_repository = IQuestionRepository(self)
 
     def execute(self, question: QuestionDTO) -> QuestionDTO:
@@ -28,7 +28,7 @@ class CreateQuestion:
 
 @implementer(ICreateChoiceExecutor)
 class CreateChoice:
-    def __init__(self):
+    def __init__(self, *args, **kwargs): #  podría cachar el servicio que me está llamando, pero no hace falta, así que sólo pondre los args y kwargs, para que pase silenciosamente
         self.choice_repository = IChoiceRepository(self)
 
     def execute(self, choice_data: ChoiceDTO) -> ChoiceDTO:
@@ -37,7 +37,7 @@ class CreateChoice:
 
 @implementer(IVoteExecutor)
 class Vote:
-    def __init__(self):
+    def __init__(self, *args, **kwargs): #  podría cachar el servicio que me está llamando, pero no hace falta, así que sólo pondre los args y kwargs, para que pase silenciosamente
         self.choice_repository = IChoiceRepository(self)
 
     def execute(self, choice_id: int) -> ChoiceDTO | None | ChoiceNotFound:

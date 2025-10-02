@@ -2,11 +2,8 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from business_logic.dtos import QuestionDTO
-from business_logic.use_cases import (
-    CreateQuestion,
-    Vote,
-)
+from .choice_service import VoteDjangoServiceAdapter
+from .question_service import QuestionServiceIODjangoAdapter
 from .models import Question
 
 
@@ -30,7 +27,7 @@ class PostInitFormMixin:
 
 
 class FormQuestion(forms.ModelForm):
-    create_question_service = CreateQuestion()
+    create_question_service = QuestionServiceIODjangoAdapter()
 
     class Meta:
         model = Question
@@ -48,13 +45,7 @@ class FormQuestion(forms.ModelForm):
         }
 
     def save(self, commit=True):
-        data = self.cleaned_data
-        # aqui podrías añadir la data del url si es que existe dentro de data y pasarla al negocio
-        # por ejemplo:
-        # pk = self.context.get('request').parser_context.get('kwargs').get('pk')
-        # data.update({'pk'}: pk)
-        question_dto = QuestionDTO(**data)
-        return self.create_question_service.execute(question_dto) # y esta función deberá regresar un objeto que se alinee a lo que el serializador pida
+        return self.create_question_service.execute(self.cleaned_data)
 
 
 class FormAnswers(ExtendFormContextMixin, PostInitFormMixin, forms.ModelForm):
@@ -63,7 +54,7 @@ class FormAnswers(ExtendFormContextMixin, PostInitFormMixin, forms.ModelForm):
         empty_label=None,
         widget=forms.RadioSelect
     )
-    vote_service = Vote()
+    vote_service = VoteDjangoServiceAdapter()
 
     class Meta:
         model = Question
@@ -76,7 +67,4 @@ class FormAnswers(ExtendFormContextMixin, PostInitFormMixin, forms.ModelForm):
             self.fields['choice_text'].queryset = question.choice_set.all()
 
     def save(self, commit=True):
-        choice = self.cleaned_data['choice_text']
-        self.vote_service.execute(choice.id)
-        choice.refresh_from_db()
-        return choice
+        return self.vote_service.execute(self.cleaned_data)

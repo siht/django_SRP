@@ -3,10 +3,7 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from business_logic.dtos import QuestionDTO
 from polls.forms import FormQuestion
-
-
 
 
 class FormQuestionTest(TestCase):
@@ -31,7 +28,7 @@ class FormQuestionTest(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('question_text', form.errors)  # Verifica que hay un error en 'question_text'
 
-    @patch('polls.forms.CreateQuestion.execute')
+    @patch('polls.forms.QuestionServiceIODjangoAdapter.execute')
     def test_save(self, mock_create_question):
         """
         Prueba que el formulario guarda los datos correctamente.
@@ -44,7 +41,5 @@ class FormQuestionTest(TestCase):
         # Llamar a save()
         form.save()
         # Verificar que CreateQuestion fue llamado con los datos correctos
-        mock_create_question.assert_called_once_with(
-            QuestionDTO(question_text='¿Cuál es tu color favorito?')
-        )
+        mock_create_question.assert_called_once_with(form_data)
 

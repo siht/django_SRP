@@ -5,7 +5,6 @@ from unittest.mock import patch
 from django.test import TestCase
 from django.utils.timezone import now
 
-from business_logic.dtos import ChoiceDTO
 from polls.models import (
     Choice,
     Question,
@@ -51,7 +50,7 @@ class ChoiceSerializerTest(TestCase):
         self.assertFalse(serializer.is_valid())
         self.assertIn('choice_text', serializer.errors)
 
-    @patch('polls.serializers.CreateChoice.execute')
+    @patch('polls.serializers.ChoiceCreatorDjangoAdapter.execute')
     def test_create(self, mock_create_choice):
         """
         Prueba que el método create llama a create_choice con los datos correctos.
@@ -71,5 +70,5 @@ class ChoiceSerializerTest(TestCase):
         # Llamar al método create
         serializer.create(serializer.validated_data)
         # Verificar que create_choice fue llamado con los datos correctos
-        expected_data = ChoiceDTO(question_id=question.id, text='Rojo')
+        expected_data = {'choice_text': 'Rojo', 'question_id': question.id}
         mock_create_choice.assert_called_once_with(expected_data)

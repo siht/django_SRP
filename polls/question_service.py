@@ -4,13 +4,18 @@ from zope.interface import implementer
 
 from business_logic.dtos import QuestionDTO
 from business_logic.exceptions import QuestionNotFound
-from business_logic.interfaces import IQuestionRepository
+from business_logic.interfaces import (
+    ICreateQuestionExecutor,
+    IQuestionRepository,
+)
+from business_logic.misc.helper_interfaces import IQuestionCreatorIOFrameworkAdapter
+from business_logic.misc.patterns import Singleton
 
 from .models import Question
 
 
 @implementer(IQuestionRepository)
-class DjangoQuestionRepository:
+class DjangoQuestionRepository(metaclass=Singleton):
     def __init__(self, service):
         self.service = service
 
@@ -61,3 +66,22 @@ class DjangoQuestionRepository:
             .order_by('-pub_date')[:limit]
         )
         return [QuestionDTO(**choice) for choice in django_recent_questions]
+
+
+@implementer(IQuestionCreatorIOFrameworkAdapter)
+class QuestionServiceIODjangoAdapter:
+    def __init__(self):
+        self.question_creator_service = ICreateQuestionExecutor(self)
+
+    def input(self, input: dict) -> QuestionDTO:
+        question_dto = QuestionDTO(**input)
+        return question_dto
+
+    def output(self, question: QuestionDTO) -> Question:
+        return Question.objects.get(id=question.id)
+
+    def execute(self, input: dict) -> Question:
+        question = self.input(input)
+        created_question = self.question_creator_service.execute(question)
+        return self.output(created_question)
+

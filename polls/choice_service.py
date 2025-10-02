@@ -5,14 +5,26 @@ from zope.interface import implementer
 from django.db.models import F
 
 from business_logic.dtos import ChoiceDTO
-from business_logic.exceptions import ChoiceNotFound, ChoiceDataError
-from business_logic.interfaces import IChoiceRepository
+from business_logic.exceptions import (
+    ChoiceDataError,
+    ChoiceNotFound,
+)
+from business_logic.interfaces import (
+    IChoiceRepository,
+    ICreateChoiceExecutor,
+    IVoteExecutor,
+)
+from business_logic.misc.helper_interfaces import (
+    IVoteIOFrameworkAdapter,
+    IChoiceCreatorIOFrameworkAdapter,
+)
+from business_logic.misc.patterns import Flyeight
 
 from .models import Choice
 
 
 @implementer(IChoiceRepository)
-class DjangoChoiceRepository:
+class DjangoChoiceRepository(metaclass=Flyeight):
     def __init__(self, service):
         self.service = service
 
@@ -186,3 +198,39 @@ class DjangoChoiceRepository:
             >>> assert not Choice.objects.filter(id=choice_instance.id).exists()
         """
         Choice.objects.filter(id=choice_id).delete()
+
+
+@implementer(IVoteIOFrameworkAdapter)
+class VoteDjangoServiceAdapter:
+    def __init__(self):
+        self.vote_service = IVoteExecutor(self)
+
+    def input(self, input: dict) -> int:
+        choice = input['choice_text']
+        return choice.id
+
+    def output(self, choice_id: int) -> Choice:
+        return Choice.objects.get(id=choice_id)
+
+    def execute(self, input: dict) -> Choice:
+        choice_id = self.input(input)
+        self.vote_service.execute(choice_id)
+        return self.output(choice_id)
+
+
+@implementer(IChoiceCreatorIOFrameworkAdapter)
+class ChoiceCreatorDjangoAdapter:
+    def __init__(self):
+        self.vote_service = ICreateChoiceExecutor(self)
+
+    def input(self, input: dict) -> ChoiceDTO:
+        choice_dto = ChoiceDTO(question_id=input['question_id'], text=input['choice_text'])
+        return choice_dto
+
+    def output(self, choice: ChoiceDTO) -> Choice:
+        return Choice.objects.get(id=choice.id)
+
+    def execute(self, input: dict) -> Choice:
+        choice = self.input(input)
+        choice_created = self.vote_service.execute(choice)
+        return self.output(choice_created)
